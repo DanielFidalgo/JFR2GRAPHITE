@@ -1,21 +1,20 @@
 package secret;
 
+import jdk.jfr.FlightRecorder;
 import jdk.jfr.consumer.RecordingStream;
 
-import java.lang.instrument.Instrumentation;
 import java.time.Duration;
 
-public class Agent {
-    public static void premain(String agentArgs, Instrumentation inst) {
-        try (var rs = new RecordingStream()) {
-            rs.enable("jdk.CPULoad").withPeriod(Duration.ofSeconds(1));
-            rs.enable("jdk.JavaMonitorEnter").withThreshold(Duration.ofMillis(10));
-            rs.onEvent("jdk.CPULoad", event -> {
-                System.out.println(event.getFloat("machineTotal"));
-            });
-            rs.onEvent("jdk.JavaMonitorEnter", event -> {
-                System.out.println(event.getClass("monitorClass"));
-            });
+
+public class Agent implements Runnable {
+    public void run() {
+        try (RecordingStream rs = new RecordingStream()) {
+            FlightRecorder.getFlightRecorder()
+                          .getEventTypes()
+                          .forEach(eventType -> {
+                              rs.enable(eventType.getName()).withPeriod(Duration.ofMillis(1));
+                              rs.onEvent(eventType.getName(), System.out::println);
+                          });
             rs.start();
         }
     }

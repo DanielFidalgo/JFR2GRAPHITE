@@ -1,0 +1,2 @@
+Premain-Class: secret.AgentStarter
+Agent-Class: secret.AgentStarter
